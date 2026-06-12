@@ -3,15 +3,25 @@ package domain
 import "context"
 
 type GreetRequest struct {
-    Name string
+	Name string
 }
 
 type GreetReply struct {
-    Message string
+	Message string
 }
 
-// GreeterService is the interface the app layer implements.
-// Repository interfaces go here too when you have DB access.
+type GoodbyeRequest struct {
+	Name string
+}
+
+type GoodbyeReply struct {
+	Message string
+}
+
 type Greeter interface {
-    Greet(ctx context.Context, req *GreetRequest) (*GreetReply, error)
+	Greet(ctx context.Context, req *GreetRequest) (*GreetReply, error)
+}
+
+type GoodbyeClient interface {
+	SayGoodbye(ctx context.Context, req *GoodbyeRequest) (*GoodbyeReply, error)
 }

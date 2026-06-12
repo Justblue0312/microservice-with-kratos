@@ -1,17 +1,12 @@
 package conf
 
 type Config struct {
-	GRPC     GRPCConfig
-	Upstream UpstreamConfig
-	NATS     NATSConfig
+	GRPC GRPCConfig
+	NATS NATSConfig
 }
 
 type GRPCConfig struct {
 	Addr string
-}
-
-type UpstreamConfig struct {
-	Goodbye string
 }
 
 type NATSConfig struct {

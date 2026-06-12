@@ -1,0 +1,4 @@
+grpc:
+    addr: ":9082"
+nats:
+    url: "nats://localhost:4222"

@@ -102,7 +102,7 @@ def main():
     )
     print(f"  4. cd services/{name} && go mod tidy")
     print(f"  5. Edit internal/domain/*.go with your business logic")
-    print(f"  6. Update ports in config/config.yaml (avoid conflicts)")
+    print(f"  6. Update gRPC port in config/config.yaml (avoid conflicts)")
     print(f"  7. Add gRPC proxy in gateway/internal/proxy/{name}.go")
     print(f"  8. Register routes in gateway/internal/server/http.go")
 

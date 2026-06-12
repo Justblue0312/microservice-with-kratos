@@ -10,5 +10,6 @@ type HTTPConfig struct {
 }
 
 type UpstreamsConfig struct {
-	Hello string
+	Hello   string
+	Goodbye string
 }

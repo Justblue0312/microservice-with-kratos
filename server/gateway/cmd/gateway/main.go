@@ -14,14 +14,21 @@ func initApp(cfg *conf.Config) (*kratos.App, error) {
 	if err != nil {
 		return nil, err
 	}
-	httpServer := server.NewHTTPServer(cfg, helloProxy)
+	goodbyeProxy, err := proxy.NewGoodbyeProxy(cfg.Upstreams.Goodbye)
+	if err != nil {
+		return nil, err
+	}
+	httpServer := server.NewHTTPServer(cfg, helloProxy, goodbyeProxy)
 	return server.NewApp(httpServer), nil
 }
 
 func main() {
 	cfg := &conf.Config{
-		HTTP:      conf.HTTPConfig{Addr: ":8080"},
-		Upstreams: conf.UpstreamsConfig{Hello: "localhost:9081"},
+		HTTP: conf.HTTPConfig{Addr: ":8080"},
+		Upstreams: conf.UpstreamsConfig{
+			Hello:   "localhost:9081",
+			Goodbye: "localhost:9082",
+		},
 	}
 	app, err := initApp(cfg)
 	if err != nil {

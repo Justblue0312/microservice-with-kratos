@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package goodbye.v1;
+
+option go_package = "github.com/justblue/luoye/gen/go/goodbye;goodbyev1";
+
+import "google/api/annotations.proto";
+
+service Goodbye {
+  rpc SayGoodbye (GoodbyeRequest) returns (GoodbyeReply) {
+    option (google.api.http) = {
+      get: "/v1/goodbye"
+    };
+  }
+}
+
+message GoodbyeRequest {
+  string name = 1;
+}
+
+message GoodbyeReply {
+  string message = 1;
+}

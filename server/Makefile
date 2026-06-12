@@ -21,22 +21,30 @@ init:
 
 .PHONY: proto
 proto:
-	buf generate proto
+	buf generate --template proto/buf.gen.yaml proto
 
 .PHONY: build-hello
 build-hello:
 	go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/hello.exe ./services/hello/cmd/hello
+
+.PHONY: build-goodbye
+build-goodbye:
+	go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/goodbye.exe ./services/goodbye/cmd/goodbye
 
 .PHONY: build-gateway
 build-gateway:
 	go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/gateway.exe ./gateway/cmd/gateway
 
 .PHONY: build
-build: build-hello build-gateway
+build: build-hello build-goodbye build-gateway
 
 .PHONY: run-hello
 run-hello:
 	go run ./services/hello/cmd/hello
+
+.PHONY: run-goodbye
+run-goodbye:
+	go run ./services/goodbye/cmd/goodbye
 
 .PHONY: run-gateway
 run-gateway:

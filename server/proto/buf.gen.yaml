@@ -1,11 +1,16 @@
-version: v2
+version: v1
 plugins:
-    - plugin: go
+    - name: go
       out: ../gen/go
       opt: paths=source_relative
 
-    - plugin: go-grpc
+    - name: go-grpc
       out: ../gen/go
       opt:
           - paths=source_relative
           - require_unimplemented_servers=false
+
+    - name: openapi
+      out: ../gen/openapi
+      opt:
+          - fq_schema_naming=true

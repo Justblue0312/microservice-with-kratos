@@ -1,4 +1,6 @@
-http:
-    addr: ":8081"
 grpc:
     addr: ":9081"
+upstream:
+    goodbye: "localhost:9082"
+nats:
+    url: "nats://localhost:4222"
