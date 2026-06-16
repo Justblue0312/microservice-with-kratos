@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	kratosgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/justblue/luoye/services/goodbye/internal/conf"
 	grpcserver "github.com/justblue/luoye/services/goodbye/internal/grpchandler"
@@ -9,6 +10,9 @@ import (
 func NewGRPCServer(cfg *conf.Config, goodbye *grpcserver.GoodbyeServer) *kratosgrpc.Server {
 	srv := kratosgrpc.NewServer(
 		kratosgrpc.Address(cfg.GRPC.Addr),
+		kratosgrpc.Middleware(
+			recovery.Recovery(),
+		),
 	)
 	goodbye.Register(srv.Server)
 	return srv

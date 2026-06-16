@@ -7,7 +7,7 @@ import (
 )
 
 func (c *Client) EnsureStream(ctx context.Context, name string, subjects []string, storage jetstream.StorageType) error {
-	_, err := c.JS.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
+	_, err := c.js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
 		Name:     name,
 		Subjects: subjects,
 		Storage:  storage,
@@ -16,6 +16,6 @@ func (c *Client) EnsureStream(ctx context.Context, name string, subjects []strin
 }
 
 func (c *Client) Publish(ctx context.Context, subject string, data []byte) error {
-	_, err := c.JS.Publish(ctx, subject, data)
+	_, err := c.js.Publish(ctx, subject, data)
 	return err
 }

@@ -5,3 +5,50 @@ services:
       - "4222:4222"
       - "8222:8222"
     command: --jetstream --http_port 8222
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  goodbye:
+    build:
+      context: ../..
+      dockerfile: services/goodbye/Dockerfile
+    ports:
+      - "9082:9082"
+      - "8082:8082"
+    depends_on:
+      - nats
+      - redis
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: services/worker/Dockerfile
+    ports:
+      - "8083:8083"
+    depends_on:
+      - redis
+
+  hello:
+    build:
+      context: ../..
+      dockerfile: services/hello/Dockerfile
+    ports:
+      - "9081:9081"
+      - "8081:8081"
+    depends_on:
+      - nats
+      - goodbye
+
+  gateway:
+    build:
+      context: ../..
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - hello
+      - goodbye
+      - worker

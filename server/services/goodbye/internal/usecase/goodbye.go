@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	kerrors "github.com/go-kratos/kratos/v2/errors"
 	"github.com/justblue/luoye/services/goodbye/internal/domain"
 )
 
@@ -16,6 +17,9 @@ func NewGoodbyeService(publisher domain.EventPublisher) *GoodbyeService {
 }
 
 func (s *GoodbyeService) SayGoodbye(ctx context.Context, req *domain.GoodbyeRequest) (*domain.GoodbyeReply, error) {
+	if req.Name == "" {
+		return nil, kerrors.BadRequest("GOODBYE_BAD_NAME", "name is required")
+	}
 	msg := fmt.Sprintf("Goodbye, %s!", req.Name)
 	reply := &domain.GoodbyeReply{Message: msg}
 

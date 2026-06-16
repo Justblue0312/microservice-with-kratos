@@ -1,5 +1,6 @@
 http:
   addr: ":8080"
 upstreams:
-  hello: "localhost:9081"
-  goodbye: "localhost:9082"
+  hello: "localhost:8081"
+  goodbye: "localhost:8082"
+  worker: "localhost:8083"

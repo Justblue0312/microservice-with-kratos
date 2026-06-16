@@ -21,14 +21,7 @@ type goodbyeSaidEvent struct {
 	Timestamp string `json:"timestamp"`
 }
 
-func NewConsumer(url string) (*Consumer, error) {
-	client, err := kitnats.NewClient(url)
-	if err != nil {
-		return nil, err
-	}
-	if err := client.EnsureStream(context.Background(), "goodbye", []string{"goodbye.said"}, jetstream.MemoryStorage); err != nil {
-		return nil, err
-	}
+func NewConsumer(client *kitnats.Client) (*Consumer, error) {
 	sub, err := client.Subscribe(context.Background(), "goodbye", jetstream.ConsumerConfig{
 		Name:          "hello-goodbye-consumer",
 		DeliverPolicy: jetstream.DeliverNewPolicy,

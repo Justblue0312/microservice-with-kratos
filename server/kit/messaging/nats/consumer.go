@@ -11,7 +11,7 @@ type Subscription struct {
 }
 
 func (c *Client) Subscribe(ctx context.Context, stream string, cfg jetstream.ConsumerConfig) (*Subscription, error) {
-	consumer, err := c.JS.CreateOrUpdateConsumer(ctx, stream, cfg)
+	consumer, err := c.js.CreateOrUpdateConsumer(ctx, stream, cfg)
 	if err != nil {
 		return nil, err
 	}

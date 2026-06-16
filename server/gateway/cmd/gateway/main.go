@@ -4,33 +4,32 @@ import (
 	"log"
 
 	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/justblue/luoye/gateway/internal/conf"
-	"github.com/justblue/luoye/gateway/internal/proxy"
 	"github.com/justblue/luoye/gateway/internal/server"
 )
 
 func initApp(cfg *conf.Config) (*kratos.App, error) {
-	helloProxy, err := proxy.NewHelloProxy(cfg.Upstreams.Hello)
+	httpServer, err := server.NewHTTPServer(cfg)
 	if err != nil {
 		return nil, err
 	}
-	goodbyeProxy, err := proxy.NewGoodbyeProxy(cfg.Upstreams.Goodbye)
-	if err != nil {
-		return nil, err
-	}
-	httpServer := server.NewHTTPServer(cfg, helloProxy, goodbyeProxy)
 	return server.NewApp(httpServer), nil
 }
 
 func main() {
-	cfg := &conf.Config{
-		HTTP: conf.HTTPConfig{Addr: ":8080"},
-		Upstreams: conf.UpstreamsConfig{
-			Hello:   "localhost:9081",
-			Goodbye: "localhost:9082",
-		},
+	c := config.New(
+		config.WithSource(file.NewSource("gateway/configs/config.yaml")),
+	)
+	if err := c.Load(); err != nil {
+		log.Fatal(err)
 	}
-	app, err := initApp(cfg)
+	var cfg conf.Config
+	if err := c.Scan(&cfg); err != nil {
+		log.Fatal(err)
+	}
+	app, err := initApp(&cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

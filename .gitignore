@@ -34,3 +34,5 @@ bin/
 .idea/
 *.swp
 design/
+plans/
+PLAN.md
