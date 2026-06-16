@@ -6,7 +6,6 @@ import (
 	"time"
 
 	kitnats "github.com/justblue/luoye/kit/messaging/nats"
-	"github.com/nats-io/nats.go/jetstream"
 )
 
 type Publisher struct {
@@ -19,14 +18,7 @@ type goodbyeSaidEvent struct {
 	Timestamp string `json:"timestamp"`
 }
 
-func NewPublisher(url string) (*Publisher, error) {
-	client, err := kitnats.NewClient(url)
-	if err != nil {
-		return nil, err
-	}
-	if err := client.EnsureStream(context.Background(), "goodbye", []string{"goodbye.said"}, jetstream.MemoryStorage); err != nil {
-		return nil, err
-	}
+func NewPublisher(client *kitnats.Client) (*Publisher, error) {
 	return &Publisher{client: client}, nil
 }
 

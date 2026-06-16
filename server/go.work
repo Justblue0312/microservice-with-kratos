@@ -1,7 +1,13 @@
 go 1.26.2
 
 use .
+
 use ./kit
+
 use ./services/hello
+
 use ./services/goodbye
+
 use ./gateway
+
+use ./services/worker

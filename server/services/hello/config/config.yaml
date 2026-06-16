@@ -1,3 +1,5 @@
+http:
+    addr: ":8081"
 grpc:
     addr: ":9081"
 upstream:

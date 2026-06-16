@@ -1,9 +1,14 @@
 package conf
 
 type Config struct {
+	HTTP     HTTPConfig
 	GRPC     GRPCConfig
 	Upstream UpstreamConfig
 	NATS     NATSConfig
+}
+
+type HTTPConfig struct {
+	Addr string
 }
 
 type GRPCConfig struct {

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,37 +10,30 @@ import (
 	kratoshttp "github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/justblue/luoye/gateway/internal/conf"
 	"github.com/justblue/luoye/gateway/internal/proxy"
-	goodbyev1 "github.com/justblue/luoye/gen/go/goodbye"
-	helloworldv1 "github.com/justblue/luoye/gen/go/helloworld"
 )
 
-func NewHTTPServer(cfg *conf.Config, hello *proxy.HelloProxy, goodbye *proxy.GoodbyeProxy) *kratoshttp.Server {
+func NewHTTPServer(cfg *conf.Config) (*kratoshttp.Server, error) {
+	helloProxy, err := proxy.NewReverseProxy(cfg.Upstreams.Hello)
+	if err != nil {
+		return nil, err
+	}
+	goodbyeProxy, err := proxy.NewReverseProxy(cfg.Upstreams.Goodbye)
+	if err != nil {
+		return nil, err
+	}
+	workerProxy, err := proxy.NewReverseProxy(cfg.Upstreams.Worker)
+	if err != nil {
+		return nil, err
+	}
+
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.RequestID)
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 
-	r.Get("/v1/hello", func(w http.ResponseWriter, r *http.Request) {
-		name := r.URL.Query().Get("name")
-		reply, err := hello.Client().SayHello(r.Context(), &helloworldv1.HelloRequest{Name: name})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadGateway)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(reply)
-	})
-
-	r.Get("/v1/goodbye", func(w http.ResponseWriter, r *http.Request) {
-		name := r.URL.Query().Get("name")
-		reply, err := goodbye.Client().SayGoodbye(r.Context(), &goodbyev1.GoodbyeRequest{Name: name})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadGateway)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(reply)
-	})
+	r.Mount("/v1/hello", http.StripPrefix("/v1/hello", helloProxy))
+	r.Mount("/v1/goodbye", http.StripPrefix("/v1/goodbye", goodbyeProxy))
+	r.Mount("/v1/worker", http.StripPrefix("/v1/worker", workerProxy))
 
 	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		openapiPath := filepath.Join("gen", "openapi", "openapi.yaml")
@@ -56,5 +48,5 @@ func NewHTTPServer(cfg *conf.Config, hello *proxy.HelloProxy, goodbye *proxy.Goo
 
 	srv := kratoshttp.NewServer(kratoshttp.Address(cfg.HTTP.Addr))
 	srv.HandlePrefix("/", r)
-	return srv
+	return srv, nil
 }

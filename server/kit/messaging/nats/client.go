@@ -1,17 +1,29 @@
 package nats
 
 import (
+	"log"
+	"time"
+
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
 type Client struct {
-	Conn *nats.Conn
-	JS   jetstream.JetStream
+	conn *nats.Conn
+	js   jetstream.JetStream
 }
 
 func NewClient(url string) (*Client, error) {
-	nc, err := nats.Connect(url)
+	nc, err := nats.Connect(url,
+		nats.MaxReconnects(-1),
+		nats.ReconnectWait(2*time.Second),
+		nats.DisconnectErrHandler(func(_ *nats.Conn, err error) {
+			log.Printf("nats: disconnected: %v", err)
+		}),
+		nats.ReconnectHandler(func(_ *nats.Conn) {
+			log.Println("nats: reconnected")
+		}),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -19,11 +31,14 @@ func NewClient(url string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{Conn: nc, JS: js}, nil
+	return &Client{conn: nc, js: js}, nil
 }
 
 func (c *Client) Close() {
-	if c.Conn != nil {
-		c.Conn.Close()
+	if c.conn != nil {
+		_ = c.conn.Drain()
 	}
 }
+
+func (c *Client) Conn() *nats.Conn        { return c.conn }
+func (c *Client) JS() jetstream.JetStream { return c.js }

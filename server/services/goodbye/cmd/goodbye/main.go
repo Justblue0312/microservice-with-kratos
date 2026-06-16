@@ -3,33 +3,27 @@ package main
 import (
 	"log"
 
-	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/justblue/luoye/services/goodbye/internal/conf"
-	"github.com/justblue/luoye/services/goodbye/internal/event"
-	grpcserver "github.com/justblue/luoye/services/goodbye/internal/grpchandler"
-	"github.com/justblue/luoye/services/goodbye/internal/server"
-	"github.com/justblue/luoye/services/goodbye/internal/usecase"
 )
 
-func initApp(cfg *conf.Config) (*kratos.App, error) {
-	publisher, err := event.NewPublisher(cfg.NATS.URL)
-	if err != nil {
-		return nil, err
-	}
-	svc := usecase.NewGoodbyeService(publisher)
-	grpcServer := server.NewGRPCServer(cfg, grpcserver.NewGoodbyeServer(svc))
-	return server.NewApp(grpcServer), nil
-}
-
 func main() {
-	cfg := &conf.Config{
-		GRPC: conf.GRPCConfig{Addr: ":9082"},
-		NATS: conf.NATSConfig{URL: "nats://localhost:4222"},
+	c := config.New(
+		config.WithSource(file.NewSource("services/goodbye/config/config.yaml")),
+	)
+	if err := c.Load(); err != nil {
+		log.Fatal(err)
 	}
-	app, err := initApp(cfg)
+	var cfg conf.Config
+	if err := c.Scan(&cfg); err != nil {
+		log.Fatal(err)
+	}
+	app, cleanup, err := initApp(&cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer cleanup()
 	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}

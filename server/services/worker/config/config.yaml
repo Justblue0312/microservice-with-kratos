@@ -1,0 +1,4 @@
+http:
+    addr: ":8083"
+redis:
+    addr: "localhost:6379"
