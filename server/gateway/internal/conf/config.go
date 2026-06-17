@@ -12,5 +12,4 @@ type HTTPConfig struct {
 type UpstreamsConfig struct {
 	Hello   string
 	Goodbye string
-	Worker  string
 }

@@ -3,4 +3,3 @@ http:
 upstreams:
   hello: "localhost:8081"
   goodbye: "localhost:8082"
-  worker: "localhost:8083"

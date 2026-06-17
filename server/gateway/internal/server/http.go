@@ -21,10 +21,6 @@ func NewHTTPServer(cfg *conf.Config) (*kratoshttp.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	workerProxy, err := proxy.NewReverseProxy(cfg.Upstreams.Worker)
-	if err != nil {
-		return nil, err
-	}
 
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.RequestID)
@@ -33,7 +29,6 @@ func NewHTTPServer(cfg *conf.Config) (*kratoshttp.Server, error) {
 
 	r.Mount("/v1/hello", http.StripPrefix("/v1/hello", helloProxy))
 	r.Mount("/v1/goodbye", http.StripPrefix("/v1/goodbye", goodbyeProxy))
-	r.Mount("/v1/worker", http.StripPrefix("/v1/worker", workerProxy))
 
 	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		openapiPath := filepath.Join("gen", "openapi", "openapi.yaml")
