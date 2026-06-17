@@ -1,7 +1,7 @@
 package nats
 
 import (
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -18,10 +18,10 @@ func NewClient(url string) (*Client, error) {
 		nats.MaxReconnects(-1),
 		nats.ReconnectWait(2*time.Second),
 		nats.DisconnectErrHandler(func(_ *nats.Conn, err error) {
-			log.Printf("nats: disconnected: %v", err)
+			slog.Error("nats: disconnected", "err", err)
 		}),
 		nats.ReconnectHandler(func(_ *nats.Conn) {
-			log.Println("nats: reconnected")
+			slog.Info("nats: reconnected")
 		}),
 	)
 	if err != nil {

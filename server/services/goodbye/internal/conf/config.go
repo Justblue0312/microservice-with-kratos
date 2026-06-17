@@ -5,6 +5,12 @@ type Config struct {
 	GRPC  GRPCConfig
 	NATS  NATSConfig
 	Redis RedisConfig
+	Asynq AsynqConfig
+}
+
+type AsynqConfig struct {
+	Addr        string
+	Concurrency int
 }
 
 type RedisConfig struct {

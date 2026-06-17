@@ -7,7 +7,6 @@
 package main
 
 import (
-	"context"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/justblue/luoye/kit/messaging/nats"
 	"github.com/justblue/luoye/services/hello/internal/conf"
@@ -16,7 +15,6 @@ import (
 	"github.com/justblue/luoye/services/hello/internal/grpchandler"
 	"github.com/justblue/luoye/services/hello/internal/server"
 	"github.com/justblue/luoye/services/hello/internal/usecase"
-	"github.com/nats-io/nats.go/jetstream"
 )
 
 // Injectors from wire.go:
@@ -31,31 +29,29 @@ func initApp(cfg *conf.Config) (*kratos.App, func(), error) {
 	greeterServer := grpchandler.NewGreeterServer(greeterService)
 	httpServer := server.NewHTTPServer(cfg, greeterServer)
 	grpcServer := server.NewGRPCServer(cfg, greeterServer)
-	client, err := provideNATSClient(cfg)
+	client, cleanupNATS, err := provideNATSClient(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
 	consumer, err := event.NewConsumer(client)
 	if err != nil {
+		cleanupNATS()
 		return nil, nil, err
 	}
 	app := server.NewApp(httpServer, grpcServer, consumer)
 	return app, func() {
+		cleanupNATS()
 	}, nil
 }
 
 // wire.go:
 
-func provideNATSClient(cfg *conf.Config) (*nats.Client, error) {
+func provideNATSClient(cfg *conf.Config) (*nats.Client, func(), error) {
 	client, err := nats.NewClient(cfg.NATS.URL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	if err := client.EnsureStream(context.Background(), "goodbye", []string{"goodbye.said"}, jetstream.MemoryStorage); err != nil {
-		client.Close()
-		return nil, err
-	}
-	return client, nil
+	return client, func() { client.Close() }, nil
 }
 
 func provideUpstream(cfg *conf.Config) conf.UpstreamConfig { return cfg.Upstream }

@@ -17,46 +17,66 @@ import (
 	"github.com/justblue/luoye/services/goodbye/internal/grpchandler"
 	"github.com/justblue/luoye/services/goodbye/internal/server"
 	"github.com/justblue/luoye/services/goodbye/internal/usecase"
+	"github.com/justblue/luoye/services/goodbye/internal/worker"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
 // Injectors from wire.go:
 
 func initApp(cfg *conf.Config) (*kratos.App, func(), error) {
-	client, err := provideNATSClient(cfg)
+	natsClient, cleanupNATS, err := provideNATSClient(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
-	publisher, err := event.NewPublisher(client)
+	publisher, err := event.NewPublisher(natsClient)
 	if err != nil {
+		cleanupNATS()
 		return nil, nil, err
 	}
-	asynqClient := provideAsynqClient(cfg)
+	asynqClient, cleanupAsynq, err := provideAsynqClient(cfg)
+	if err != nil {
+		cleanupNATS()
+		return nil, nil, err
+	}
 	asynqPublisher := event.NewAsynqPublisher(asynqClient)
 	compositePublisher := event.NewCompositePublisher(publisher, asynqPublisher)
 	goodbyeService := usecase.NewGoodbyeService(compositePublisher)
 	goodbyeServer := grpchandler.NewGoodbyeServer(goodbyeService)
 	httpServer := server.NewHTTPServer(cfg, goodbyeServer)
 	grpcServer := server.NewGRPCServer(cfg, goodbyeServer)
-	app := server.NewApp(httpServer, grpcServer)
+	asynqServer := provideAsynqServer(cfg)
+	goodbyeProcessor := worker.NewGoodbyeProcessor()
+	goodbyeHandler := worker.NewGoodbyeHandler(goodbyeProcessor)
+	asynqService := server.NewAsynqService(asynqServer, goodbyeHandler)
+	app := server.NewApp(httpServer, grpcServer, asynqService)
 	return app, func() {
+		cleanupAsynq()
+		cleanupNATS()
 	}, nil
 }
 
 // wire.go:
 
-func provideNATSClient(cfg *conf.Config) (*nats.Client, error) {
+func provideNATSClient(cfg *conf.Config) (*nats.Client, func(), error) {
 	client, err := nats.NewClient(cfg.NATS.URL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if err := client.EnsureStream(context.Background(), "goodbye", []string{"goodbye.said"}, jetstream.MemoryStorage); err != nil {
 		client.Close()
-		return nil, err
+		return nil, nil, err
 	}
-	return client, nil
+	return client, func() { client.Close() }, nil
 }
 
-func provideAsynqClient(cfg *conf.Config) *asynq.Client {
-	return asynq2.NewClient(asynq2.Config{Addr: cfg.Redis.Addr})
+func provideAsynqClient(cfg *conf.Config) (*asynq.Client, func(), error) {
+	client := asynq2.NewClient(asynq2.Config{Addr: cfg.Redis.Addr})
+	return client, func() { client.Close() }, nil
+}
+
+func provideAsynqServer(cfg *conf.Config) *asynq.Server {
+	return asynq2.NewServer(asynq2.Config{
+		Addr:        cfg.Asynq.Addr,
+		Concurrency: cfg.Asynq.Concurrency,
+	})
 }

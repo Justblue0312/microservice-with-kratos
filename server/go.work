@@ -9,5 +9,3 @@ use ./services/hello
 use ./services/goodbye
 
 use ./gateway
-
-use ./services/worker

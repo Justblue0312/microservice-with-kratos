@@ -3,8 +3,6 @@
 package main
 
 import (
-	"context"
-
 	"github.com/go-kratos/kratos/v2"
 	"github.com/google/wire"
 	kitnats "github.com/justblue/luoye/kit/messaging/nats"
@@ -15,19 +13,14 @@ import (
 	"github.com/justblue/luoye/services/hello/internal/grpchandler"
 	"github.com/justblue/luoye/services/hello/internal/server"
 	"github.com/justblue/luoye/services/hello/internal/usecase"
-	"github.com/nats-io/nats.go/jetstream"
 )
 
-func provideNATSClient(cfg *conf.Config) (*kitnats.Client, error) {
+func provideNATSClient(cfg *conf.Config) (*kitnats.Client, func(), error) {
 	client, err := kitnats.NewClient(cfg.NATS.URL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	if err := client.EnsureStream(context.Background(), "goodbye", []string{"goodbye.said"}, jetstream.MemoryStorage); err != nil {
-		client.Close()
-		return nil, err
-	}
-	return client, nil
+	return client, func() { client.Close() }, nil
 }
 
 func provideUpstream(cfg *conf.Config) conf.UpstreamConfig { return cfg.Upstream }

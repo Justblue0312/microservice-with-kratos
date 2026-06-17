@@ -10,6 +10,11 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   goodbye:
     build:
@@ -20,15 +25,6 @@ services:
       - "8082:8082"
     depends_on:
       - nats
-      - redis
-
-  worker:
-    build:
-      context: ../..
-      dockerfile: services/worker/Dockerfile
-    ports:
-      - "8083:8083"
-    depends_on:
       - redis
 
   hello:
@@ -51,4 +47,3 @@ services:
     depends_on:
       - hello
       - goodbye
-      - worker

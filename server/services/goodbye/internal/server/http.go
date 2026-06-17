@@ -1,6 +1,8 @@
 package server
 
 import (
+	"net/http"
+
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	kratoshttp "github.com/go-kratos/kratos/v2/transport/http"
 	goodbyev1 "github.com/justblue/luoye/gen/go/goodbye"
@@ -15,6 +17,10 @@ func NewHTTPServer(cfg *conf.Config, goodbye *grpchandler.GoodbyeServer) *kratos
 			recovery.Recovery(),
 		),
 	)
+	r := srv.Route("/")
+	r.GET("/health", func(ctx kratoshttp.Context) error {
+		return ctx.Result(http.StatusOK, map[string]string{"status": "ok"})
+	})
 	goodbyev1.RegisterGoodbyeHTTPServer(srv, goodbye)
 	return srv
 }

@@ -3,16 +3,14 @@ package event
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"log"
+	"log/slog"
 
 	kitnats "github.com/justblue/luoye/kit/messaging/nats"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
 type Consumer struct {
-	client *kitnats.Client
-	mc     jetstream.MessagesContext
+	mc jetstream.MessagesContext
 }
 
 type goodbyeSaidEvent struct {
@@ -34,30 +32,35 @@ func NewConsumer(client *kitnats.Client) (*Consumer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Consumer{client: client, mc: mc}, nil
+	return &Consumer{mc: mc}, nil
 }
 
 func (c *Consumer) Start(ctx context.Context) error {
 	go func() {
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
 			msg, err := c.mc.Next()
 			if err != nil {
+				if ctx.Err() != nil {
+					return
+				}
+				slog.ErrorContext(ctx, "nats: consumer error, stopping",
+					"err", err,
+				)
 				return
 			}
 			var evt goodbyeSaidEvent
 			if err := json.Unmarshal(msg.Data(), &evt); err != nil {
-				log.Printf("nats: bad message: %v", err)
+				slog.ErrorContext(ctx, "nats: bad message",
+					"err", err,
+				)
 				msg.Term()
 				continue
 			}
-			log.Printf("nats: received goodbye.said: name=%s message=%q timestamp=%s",
-				evt.Name, evt.Message, evt.Timestamp)
-			fmt.Printf("Hello received via NATS: %s\n", evt.Message)
+			slog.InfoContext(ctx, "nats: received goodbye.said",
+				"name", evt.Name,
+				"message", evt.Message,
+				"timestamp", evt.Timestamp,
+			)
 			msg.Ack()
 		}
 	}()
@@ -65,8 +68,8 @@ func (c *Consumer) Start(ctx context.Context) error {
 }
 
 func (c *Consumer) Stop(_ context.Context) error {
-	if c.client != nil {
-		c.client.Close()
+	if c.mc != nil {
+		c.mc.Stop()
 	}
 	return nil
 }
